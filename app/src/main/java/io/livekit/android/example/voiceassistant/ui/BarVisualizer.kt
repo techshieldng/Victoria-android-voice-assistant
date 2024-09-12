@@ -3,11 +3,10 @@ package io.livekit.android.example.voiceassistant.ui
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -28,11 +27,11 @@ fun BarVisualizer(
     brush: Brush = SolidColor(Color.Black),
     radius: Dp = 2.dp,
     innerPadding: Dp = 1.dp,
-    amplitudes: List<Float> = listOf(0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1f)
+    amplitudes: List<Float> = listOf(0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1f)
 ) {
     val _padding = remember(innerPadding) { innerPadding.coerceAtLeast(0.dp) }
     val _radius = remember(radius) { radius.coerceAtLeast(0.dp) }
-    val spikesAmplitudes = remember(amplitudes) { amplitudes }
+    val spikesAmplitudes = amplitudes.toMutableList()
     Canvas(
         modifier = modifier
     ) {
@@ -47,7 +46,7 @@ fun BarVisualizer(
                 ),
                 size = Size(
                     width = spikeWidth,
-                    height = size.height * amplitude
+                    height = (size.height * amplitude).coerceAtLeast(1.dp.toPx())
                 ),
                 cornerRadius = CornerRadius(_radius.toPx(), _radius.toPx()),
                 style = style
@@ -63,6 +62,10 @@ fun BarVisualizer(
 @Composable
 fun BarVisualizerPreview() {
     Box(modifier = Modifier.fillMaxSize()) {
-        BarVisualizer()
+        BarVisualizer(
+            modifier = Modifier
+                .height(100.dp)
+                .fillMaxWidth()
+        )
     }
 }

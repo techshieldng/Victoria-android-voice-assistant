@@ -11,12 +11,10 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import io.livekit.android.compose.types.TrackReference
 import io.livekit.android.room.track.RemoteAudioTrack
-import io.livekit.android.util.LKLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import livekit.org.webrtc.AudioTrackSink
 import java.nio.ByteBuffer
@@ -34,10 +32,12 @@ private const val MIN_VOLUME = MAX_VOLUME * MIN_AMPLITUDE
 @Composable
 fun RemoteAudioTrackBarVisualizer(audioTrackRef: TrackReference?, modifier: Modifier = Modifier) {
     val amplitudes = remember {
-        val emptyInts = Array(NUM_BARS) { MIN_AMPLITUDE }
+        val emptyInts = Array(NUM_BARS) { 0.05f }
         mutableStateListOf(*emptyInts)
     }
     val audioSink = remember { AudioTrackSinkFlow() }
+
+    // Attach to audio track if available.
     DisposableEffect(key1 = audioTrackRef) {
         val track = audioTrackRef?.publication?.track as? RemoteAudioTrack
         track?.addSink(audioSink)
@@ -47,12 +47,7 @@ fun RemoteAudioTrackBarVisualizer(audioTrackRef: TrackReference?, modifier: Modi
         }
     }
 
-    LaunchedEffect(key1 = audioTrackRef) {
-        audioSink.audioFormat.collectLatest {
-            LKLog.e { "$it" }
-        }
-    }
-
+    // Collect and process audio data.
     LaunchedEffect(key1 = audioTrackRef) {
         launch(Dispatchers.IO) {
             audioSink.audioFlow.collect { (buffer, _) ->
@@ -71,11 +66,8 @@ fun RemoteAudioTrackBarVisualizer(audioTrackRef: TrackReference?, modifier: Modi
         }
     }
 
-
-    val colorBrush = SolidColor(Color(0xFF65f0f5))
-
     BarVisualizer(
-        brush = colorBrush,
+        brush = SolidColor(Color(0xFF65f0f5)),
         innerPadding = 10.dp,
         radius = 2.dp,
         amplitudes = amplitudes,
@@ -83,7 +75,10 @@ fun RemoteAudioTrackBarVisualizer(audioTrackRef: TrackReference?, modifier: Modi
     )
 }
 
-class AudioTrackSinkFlow : AudioTrackSink {
+/**
+ * Gathers the audio data from an AudioTrack and emits through a flow.
+ */
+private class AudioTrackSinkFlow : AudioTrackSink {
     val audioFormat = MutableStateFlow(AudioFormat(16, 48000, 1))
     val audioFlow = MutableSharedFlow<Pair<ByteBuffer, Int>>(
         extraBufferCapacity = 1,

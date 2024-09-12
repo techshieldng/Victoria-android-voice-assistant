@@ -81,10 +81,12 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
             RemoteAudioTrackBarVisualizer(
                 audioTrackRef = filtered.firstOrNull(),
                 modifier = Modifier
+                    .padding(8.dp)
                     .fillMaxWidth()
                     .constrainAs(audioVisualizer) {
                         height = Dimension.percent(0.1f)
                         width = Dimension.fillToConstraints
+
                         top.linkTo(parent.top)
                         start.linkTo(parent.start)
                         end.linkTo(parent.end)
