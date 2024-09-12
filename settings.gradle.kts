@@ -16,10 +16,11 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        mavenLocal() // nocommit
         google()
         mavenCentral()
         maven { url = URI("https://jitpack.io") }
+        // For SNAPSHOT access
+        maven { url = URI("https://s01.oss.sonatype.org/content/repositories/snapshots/") }
     }
 }
 
