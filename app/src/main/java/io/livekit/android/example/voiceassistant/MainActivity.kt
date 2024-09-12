@@ -35,6 +35,8 @@ import io.livekit.android.compose.local.RoomScope
 import io.livekit.android.compose.state.rememberTracks
 import io.livekit.android.compose.state.transcriptions.rememberParticipantTranscriptions
 import io.livekit.android.compose.state.transcriptions.rememberTranscriptions
+import io.livekit.android.example.voiceassistant.state.AssistantState
+import io.livekit.android.example.voiceassistant.state.rememberAssistantState
 import io.livekit.android.example.voiceassistant.ui.RemoteAudioTrackBarVisualizer
 import io.livekit.android.example.voiceassistant.ui.theme.LiveKitVoiceAssistantExampleTheme
 import io.livekit.android.room.track.Track
@@ -72,14 +74,21 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
         ) { room ->
             val (audioVisualizer, chatLog) = createRefs()
             val trackRefs = rememberTracks(sources = listOf(Track.Source.MICROPHONE))
-            val filtered = trackRefs.filter { it.participant != room.localParticipant }
+            val remoteTrackRef = trackRefs.firstOrNull { it.participant != room.localParticipant }
 
-            val segments = rememberTranscriptions()
-            val localSegments = rememberParticipantTranscriptions(room.localParticipant)
-            val lazyListState = rememberLazyListState()
+            val assistantState = rememberAssistantState(participant = remoteTrackRef?.participant)
 
+            // Optionally do something with the assistant state.
+            when (assistantState) {
+                AssistantState.LISTENING -> {}
+                AssistantState.THINKING -> {}
+                AssistantState.SPEAKING -> {}
+                else -> {}
+            }
+
+            // Amplitude visualization of the Assistant's voice track.
             RemoteAudioTrackBarVisualizer(
-                audioTrackRef = filtered.firstOrNull(),
+                audioTrackRef = remoteTrackRef,
                 modifier = Modifier
                     .padding(8.dp)
                     .fillMaxWidth()
@@ -93,10 +102,11 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
                     }
             )
 
-            // Scroll to bottom as new transcriptions come in.
-            LaunchedEffect(segments) {
-                lazyListState.scrollToItem((segments.size - 1).coerceAtLeast(0))
-            }
+            // Transcriptions support.
+            val segments = rememberTranscriptions()
+            val localSegments = rememberParticipantTranscriptions(room.localParticipant)
+            val lazyListState = rememberLazyListState()
+
             LazyColumn(
                 userScrollEnabled = true,
                 state = lazyListState,
@@ -125,6 +135,11 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
                         }
                     }
                 }
+            }
+
+            // Scroll to bottom as new transcriptions come in.
+            LaunchedEffect(segments) {
+                lazyListState.scrollToItem((segments.size - 1).coerceAtLeast(0))
             }
         }
     }
