@@ -10,7 +10,6 @@ import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.fadeIn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -29,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.compose.Dimension
 import io.livekit.android.LiveKit
 import io.livekit.android.annotations.Beta
 import io.livekit.android.compose.local.RoomScope
@@ -74,42 +74,37 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
             val trackRefs = rememberTracks(sources = listOf(Track.Source.MICROPHONE))
             val filtered = trackRefs.filter { it.participant != room.localParticipant }
 
-            if (filtered.isNotEmpty()) {
-                RemoteAudioTrackBarVisualizer(
-                    audioTrackRef = filtered.first(),
-                    modifier = Modifier
-                        .background(Color.Yellow)
-                        .fillMaxWidth()
-                        .height(100.dp)
-                        .constrainAs(audioVisualizer) {
-                            top.linkTo(parent.top)
-                            start.linkTo(parent.start)
-                            end.linkTo(parent.end)
-                        }
-                )
-            }
-
             val segments = rememberTranscriptions()
             val localSegments = rememberParticipantTranscriptions(room.localParticipant)
             val lazyListState = rememberLazyListState()
 
+            RemoteAudioTrackBarVisualizer(
+                audioTrackRef = filtered.firstOrNull(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .constrainAs(audioVisualizer) {
+                        height = Dimension.percent(0.1f)
+                        width = Dimension.fillToConstraints
+                        top.linkTo(parent.top)
+                        start.linkTo(parent.start)
+                        end.linkTo(parent.end)
+                    }
+            )
 
-            // Scroll to bottom as new items come in.
+            // Scroll to bottom as new transcriptions come in.
             LaunchedEffect(segments) {
                 lazyListState.scrollToItem((segments.size - 1).coerceAtLeast(0))
             }
-
-
             LazyColumn(
                 userScrollEnabled = true,
                 state = lazyListState,
                 modifier = Modifier
-                    .fillMaxHeight(0.6f)
-                    .fillMaxWidth()
                     .constrainAs(chatLog) {
                         bottom.linkTo(parent.bottom)
                         start.linkTo(parent.start)
                         end.linkTo(parent.end)
+                        height = Dimension.percent(0.9f)
+                        width = Dimension.fillToConstraints
                     }
             ) {
                 items(
