@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -70,11 +71,23 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
             audio = true,
             connect = true,
         ) { room ->
+            val (audioVisualizer, chatLog) = createRefs()
             val trackRefs = rememberTracks(sources = listOf(Track.Source.MICROPHONE))
             val filtered = trackRefs.filter { it.participant != room.localParticipant }
 
             if (filtered.isNotEmpty()) {
-                RemoteAudioTrackBarVisualizer(audioTrackRef = filtered.first())
+                RemoteAudioTrackBarVisualizer(
+                    audioTrackRef = filtered.first(),
+                    modifier = Modifier
+                        .background(Color.Yellow)
+                        .fillMaxWidth()
+                        .height(100.dp)
+                        .constrainAs(audioVisualizer) {
+                            top.linkTo(parent.top)
+                            start.linkTo(parent.start)
+                            end.linkTo(parent.end)
+                        }
+                )
             }
 
             val segments = rememberTranscriptions()
@@ -87,7 +100,6 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
                 lazyListState.scrollToItem((segments.size - 1).coerceAtLeast(0))
             }
 
-            val (audioVisualizer, chatLog) = createRefs()
 
             LazyColumn(
                 userScrollEnabled = true,

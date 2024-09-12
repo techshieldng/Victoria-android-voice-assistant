@@ -3,19 +3,26 @@ package io.livekit.android.example.voiceassistant.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import io.livekit.android.compose.types.TrackReference
+import io.livekit.android.example.voiceassistant.ui.noise.FFTAudioProcessor
 import io.livekit.android.room.track.RemoteAudioTrack
-import io.livekit.android.util.LKLog
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import livekit.org.webrtc.AudioTrackSink
 import java.nio.ByteBuffer
 
 @Composable
-fun RemoteAudioTrackBarVisualizer(audioTrackRef: TrackReference) {
+fun RemoteAudioTrackBarVisualizer(audioTrackRef: TrackReference, modifier: Modifier = Modifier) {
     val audioSink = remember { AudioTrackSinkFlow() }
+    val audioProcessor = remember { FFTAudioProcessor() }
+    val fft by audioProcessor.fftFlow.collectAsState(initial = FloatArray(0))
     DisposableEffect(key1 = audioTrackRef) {
         val track = audioTrackRef.publication?.track as? RemoteAudioTrack
         track?.addSink(audioSink)
@@ -27,25 +34,25 @@ fun RemoteAudioTrackBarVisualizer(audioTrackRef: TrackReference) {
 
     LaunchedEffect(key1 = audioTrackRef) {
         audioSink.audioFormat.collect {
-            LKLog.e { "audio format: $it" }
+            audioProcessor.configure(it)
         }
     }
+
     LaunchedEffect(key1 = audioTrackRef) {
-        var count = 0
-        audioSink.audioFlow.collect { (buffer, numFrames) ->
-            count++
-            count %= 100
-            if (count == 0) {
-                LKLog.e { "frames: ${numFrames}, hasArray: ${buffer.hasArray()}" }
+        launch(Dispatchers.IO) {
+            audioSink.audioFlow.collect { (buffer, _) ->
+                audioProcessor.queueInput(buffer)
             }
         }
     }
+
+    BarVisualizer(fft = fft, modifier = modifier)
 }
 
 class AudioTrackSinkFlow : AudioTrackSink {
     val audioFormat = MutableStateFlow(AudioFormat(16, 48000, 1))
     val audioFlow = MutableSharedFlow<Pair<ByteBuffer, Int>>(
-        extraBufferCapacity = 10,
+        extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
