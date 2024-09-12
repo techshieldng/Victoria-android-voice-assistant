@@ -45,7 +45,7 @@ fun RemoteAudioTrackBarVisualizer(audioTrackRef: TrackReference) {
 class AudioTrackSinkFlow : AudioTrackSink {
     val audioFormat = MutableStateFlow(AudioFormat(16, 48000, 1))
     val audioFlow = MutableSharedFlow<Pair<ByteBuffer, Int>>(
-        extraBufferCapacity = 1,
+        extraBufferCapacity = 10,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
