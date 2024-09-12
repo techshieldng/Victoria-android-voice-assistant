@@ -1,6 +1,5 @@
 package io.livekit.android.example.voiceassistant.ui
 
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -29,7 +28,7 @@ private const val NUM_BARS = 15
 
 private const val MIN_AMPLITUDE = 0.1f
 private const val MAX_VOLUME = 25000.0
-private val MIN_VOLUME = MAX_VOLUME * MIN_AMPLITUDE
+private const val MIN_VOLUME = MAX_VOLUME * MIN_AMPLITUDE
 
 
 @Composable
@@ -81,7 +80,6 @@ fun RemoteAudioTrackBarVisualizer(audioTrackRef: TrackReference?, modifier: Modi
         radius = 2.dp,
         amplitudes = amplitudes,
         modifier = modifier,
-        spikeAnimationSpec = tween(500),
     )
 }
 
