@@ -20,6 +20,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+/**
+ * Draws bars evenly split across the width of the composable.
+ */
 @Composable
 fun BarVisualizer(
     modifier: Modifier = Modifier,
@@ -27,6 +30,9 @@ fun BarVisualizer(
     brush: Brush = SolidColor(Color.Black),
     radius: Dp = 2.dp,
     innerPadding: Dp = 1.dp,
+    /**
+     * Values of the bars, between 0.0f and 1.0f, where 1.0f represents the maximum height of the composable.
+     */
     amplitudes: List<Float> = listOf(0.1f, 0.2f, 0.3f, 0.4f, 0.5f, 0.4f, 0.3f, 0.2f, 0.1f)
 ) {
     val _padding = remember(innerPadding) { innerPadding.coerceAtLeast(0.dp) }

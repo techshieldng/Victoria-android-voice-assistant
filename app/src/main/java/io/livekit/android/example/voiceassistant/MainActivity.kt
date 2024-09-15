@@ -5,10 +5,6 @@ package io.livekit.android.example.voiceassistant
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.fadeIn
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,37 +12,36 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
+import io.livekit.android.AudioOptions
 import io.livekit.android.LiveKit
+import io.livekit.android.LiveKitOverrides
 import io.livekit.android.annotations.Beta
 import io.livekit.android.compose.local.RoomScope
 import io.livekit.android.compose.state.rememberTracks
 import io.livekit.android.compose.state.transcriptions.rememberParticipantTranscriptions
 import io.livekit.android.compose.state.transcriptions.rememberTranscriptions
+import io.livekit.android.example.voiceassistant.audio.LocalAudioTrackFlow
 import io.livekit.android.example.voiceassistant.state.AssistantState
 import io.livekit.android.example.voiceassistant.state.rememberAssistantState
 import io.livekit.android.example.voiceassistant.ui.RemoteAudioTrackBarVisualizer
+import io.livekit.android.example.voiceassistant.ui.UserTranscription
 import io.livekit.android.example.voiceassistant.ui.theme.LiveKitVoiceAssistantExampleTheme
 import io.livekit.android.room.track.Track
-import io.livekit.android.room.types.TranscriptionSegment
 import io.livekit.android.util.LoggingLevel
 
 // Replace these values with your url and generated token.
-const val wsURL = ""
+const val wsURL = "ws://192.168.11.2:7880"
 const val token =
-    ""
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3MjYyMjI2NjIsImlzcyI6IkFQSVRMV3JLOHRid3I0NyIsIm5iZiI6MTcyMzYzMDY2Miwic3ViIjoicGhvbmUiLCJ2aWRlbyI6eyJyb29tIjoibXlyb29tIiwicm9vbUpvaW4iOnRydWV9fQ.61oC0qB3cOxIv-MUp89e05Pelw-G_thqg5G7UMEmAXw"
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,13 +59,25 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun VoiceAssistant(modifier: Modifier = Modifier) {
-
     ConstraintLayout(modifier = modifier) {
+        // Setup listening to the local microphone if needed.
+        val localAudioFlow = remember { LocalAudioTrackFlow() }
+        val overrides = remember {
+            LiveKitOverrides(
+                audioOptions = AudioOptions(
+                    javaAudioDeviceModuleCustomizer = { builder ->
+                        builder.setSamplesReadyCallback(localAudioFlow)
+                    }
+                )
+            )
+        }
+
         RoomScope(
             url = wsURL,
             token = token,
             audio = true,
             connect = true,
+            liveKitOverrides = overrides
         ) { room ->
             val (audioVisualizer, chatLog) = createRefs()
             val trackRefs = rememberTracks(sources = listOf(Track.Source.MICROPHONE))
@@ -102,7 +109,7 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
                     }
             )
 
-            // Transcriptions support.
+            // Get and display the transcriptions.
             val segments = rememberTranscriptions()
             val localSegments = rememberParticipantTranscriptions(room.localParticipant)
             val lazyListState = rememberLazyListState()
@@ -129,7 +136,7 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
                             .padding(8.dp)
                     ) {
                         if (localSegments.contains(segment)) {
-                            UserTranscriptionBox(segment = segment, modifier = Modifier.align(Alignment.CenterEnd))
+                            UserTranscription(segment = segment, modifier = Modifier.align(Alignment.CenterEnd))
                         } else {
                             Text(text = segment.text, modifier = Modifier.align(Alignment.CenterStart))
                         }
@@ -141,36 +148,6 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
             LaunchedEffect(segments) {
                 lazyListState.scrollToItem((segments.size - 1).coerceAtLeast(0))
             }
-        }
-    }
-}
-
-@Composable
-fun UserTranscriptionBox(
-    segment: TranscriptionSegment,
-    modifier: Modifier = Modifier
-) {
-    val state = remember {
-        MutableTransitionState(false).apply {
-            // Start the animation immediately.
-            targetState = true
-        }
-    }
-    AnimatedVisibility(
-        visibleState = state,
-        enter = fadeIn(),
-        modifier = modifier
-    ) {
-        Box(
-            modifier = modifier
-                .clip(RoundedCornerShape(8.dp, 2.dp, 8.dp, 8.dp))
-                .background(Color.LightGray)
-        ) {
-            Text(
-                text = segment.text,
-                fontWeight = FontWeight.Medium,
-                modifier = Modifier.padding(8.dp)
-            )
         }
     }
 }

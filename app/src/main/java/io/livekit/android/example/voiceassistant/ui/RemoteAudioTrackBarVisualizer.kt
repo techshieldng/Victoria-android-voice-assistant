@@ -10,13 +10,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import io.livekit.android.compose.types.TrackReference
+import io.livekit.android.example.voiceassistant.audio.AudioTrackSinkFlow
 import io.livekit.android.room.track.RemoteAudioTrack
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import livekit.org.webrtc.AudioTrackSink
 import java.nio.ByteBuffer
 import kotlin.math.round
 import kotlin.math.sqrt
@@ -51,6 +48,7 @@ fun RemoteAudioTrackBarVisualizer(audioTrackRef: TrackReference?, modifier: Modi
     LaunchedEffect(key1 = audioTrackRef) {
         launch(Dispatchers.IO) {
             audioSink.audioFlow.collect { (buffer, _) ->
+                // Calculate the volume to display as bars.
                 val volume = (calculateVolume(buffer).coerceIn(MIN_VOLUME, MAX_VOLUME) / MAX_VOLUME).toFloat()
 
                 val middle = NUM_BARS / 2
@@ -75,39 +73,9 @@ fun RemoteAudioTrackBarVisualizer(audioTrackRef: TrackReference?, modifier: Modi
     )
 }
 
-/**
- * Gathers the audio data from an AudioTrack and emits through a flow.
- */
-private class AudioTrackSinkFlow : AudioTrackSink {
-    val audioFormat = MutableStateFlow(AudioFormat(16, 48000, 1))
-    val audioFlow = MutableSharedFlow<Pair<ByteBuffer, Int>>(
-        extraBufferCapacity = 1,
-        onBufferOverflow = BufferOverflow.DROP_OLDEST
-    )
-
-    override fun onData(
-        audioData: ByteBuffer,
-        bitsPerSample: Int,
-        sampleRate: Int,
-        numberOfChannels: Int,
-        numberOfFrames: Int,
-        absoluteCaptureTimestampMs: Long
-    ) {
-        val curAudioFormat = audioFormat.value
-        if (curAudioFormat.bitsPerSample != bitsPerSample ||
-            curAudioFormat.sampleRate != sampleRate ||
-            curAudioFormat.numberOfChannels != numberOfChannels
-        ) {
-            audioFormat.tryEmit(AudioFormat(bitsPerSample, sampleRate, numberOfChannels))
-        }
-        audioFlow.tryEmit(audioData to numberOfFrames)
-    }
-}
-
-data class AudioFormat(val bitsPerSample: Int, val sampleRate: Int, val numberOfChannels: Int)
 
 /**
- * Determines volume of input using the RMS of the amplitude.
+ * Determines volume of input using the root mean squared of the amplitude.
  */
 fun calculateVolume(input: ByteBuffer): Double {
     var average = 0L
