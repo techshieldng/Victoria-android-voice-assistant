@@ -10,16 +10,16 @@ import io.livekit.android.room.participant.Participant
 import io.livekit.android.util.flow
 import kotlinx.coroutines.flow.collectLatest
 
-private const val VOICE_ASSISTANT_STATE_KEY = "voice_assistant.state"
+private const val AGENT_STATE_KEY = "lk.agent.state"
 
 /**
- * Keeps track of the assistant state for a participant.
+ * Keeps track of the agent state for a participant.
  */
 @Composable
-fun rememberAssistantState(participant: Participant?): AssistantState {
+fun rememberAgentState(participant: Participant?): AgentState {
     var state by remember(participant) {
-        val initialState = AssistantState.fromAttribute(
-            participant?.attributes?.get(VOICE_ASSISTANT_STATE_KEY)
+        val initialState = AgentState.fromAttribute(
+            participant?.attributes?.get(AGENT_STATE_KEY)
         )
         mutableStateOf(initialState)
     }
@@ -30,21 +30,21 @@ fun rememberAssistantState(participant: Participant?): AssistantState {
         }
 
         participant::attributes.flow.collectLatest { attributes ->
-            state = AssistantState.fromAttribute(attributes[VOICE_ASSISTANT_STATE_KEY])
+            state = AgentState.fromAttribute(attributes[AGENT_STATE_KEY])
         }
     }
 
     return state
 }
 
-enum class AssistantState {
+enum class AgentState {
     LISTENING,
     THINKING,
     SPEAKING,
     UNKNOWN;
 
     companion object {
-        fun fromAttribute(attribute: String?): AssistantState {
+        fun fromAttribute(attribute: String?): AgentState {
             return when (attribute) {
                 "listening" -> LISTENING
                 "thinking" -> THINKING

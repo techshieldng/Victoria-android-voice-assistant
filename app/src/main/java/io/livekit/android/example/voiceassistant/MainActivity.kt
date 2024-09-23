@@ -30,8 +30,8 @@ import io.livekit.android.compose.state.rememberTracks
 import io.livekit.android.compose.state.transcriptions.rememberParticipantTranscriptions
 import io.livekit.android.compose.state.transcriptions.rememberTranscriptions
 import io.livekit.android.example.voiceassistant.audio.LocalAudioTrackFlow
-import io.livekit.android.example.voiceassistant.state.AssistantState
-import io.livekit.android.example.voiceassistant.state.rememberAssistantState
+import io.livekit.android.example.voiceassistant.state.AgentState
+import io.livekit.android.example.voiceassistant.state.rememberAgentState
 import io.livekit.android.example.voiceassistant.ui.RemoteAudioTrackBarVisualizer
 import io.livekit.android.example.voiceassistant.ui.UserTranscription
 import io.livekit.android.example.voiceassistant.ui.theme.LiveKitVoiceAssistantExampleTheme
@@ -83,13 +83,13 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
             val trackRefs = rememberTracks(sources = listOf(Track.Source.MICROPHONE))
             val remoteTrackRef = trackRefs.firstOrNull { it.participant != room.localParticipant }
 
-            val assistantState = rememberAssistantState(participant = remoteTrackRef?.participant)
+            val agentState = rememberAgentState(participant = remoteTrackRef?.participant)
 
-            // Optionally do something with the assistant state.
-            when (assistantState) {
-                AssistantState.LISTENING -> {}
-                AssistantState.THINKING -> {}
-                AssistantState.SPEAKING -> {}
+            // Optionally do something with the agent state.
+            when (agentState) {
+                AgentState.LISTENING -> {}
+                AgentState.THINKING -> {}
+                AgentState.SPEAKING -> {}
                 else -> {}
             }
 
