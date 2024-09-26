@@ -38,27 +38,27 @@ import io.livekit.android.example.voiceassistant.ui.theme.LiveKitVoiceAssistantE
 import io.livekit.android.room.track.Track
 import io.livekit.android.util.LoggingLevel
 
-// Replace these values with your url and generated token.
-const val wsURL = ""
-const val token =
-    ""
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         LiveKit.loggingLevel = LoggingLevel.DEBUG
         requireNeededPermissions {
-            setContent {
-                LiveKitVoiceAssistantExampleTheme {
-                    VoiceAssistant(modifier = Modifier.fillMaxSize())
+            requireToken { connectionDetails ->
+                setContent {
+                    LiveKitVoiceAssistantExampleTheme {
+                        VoiceAssistant(
+                            connectionDetails,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             }
         }
+        }
     }
-}
 
 @Composable
-fun VoiceAssistant(modifier: Modifier = Modifier) {
+fun VoiceAssistant(connectionDetails: ConnectionDetails, modifier: Modifier = Modifier) {
     ConstraintLayout(modifier = modifier) {
         // Setup listening to the local microphone if needed.
         val localAudioFlow = remember { LocalAudioTrackFlow() }
@@ -73,8 +73,8 @@ fun VoiceAssistant(modifier: Modifier = Modifier) {
         }
 
         RoomScope(
-            url = wsURL,
-            token = token,
+            url = connectionDetails.serverUrl,
+            token = connectionDetails.participantToken,
             audio = true,
             connect = true,
             liveKitOverrides = overrides
