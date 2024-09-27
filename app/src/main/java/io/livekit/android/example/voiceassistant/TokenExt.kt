@@ -16,6 +16,16 @@ const val sandboxID = ""
  * When building an app for production, you should use your own token server.
  */
 fun ComponentActivity.requireToken(onTokenGenerated: (url: String, token: String) -> Unit) {
+    if (sandboxID.length == 0) {
+        runOnUiThread {
+            // NOTE: If you prefer not to use LiveKit Sandboxes for testing, you can generate your
+            // tokens manually by visiting https://cloud.livekit.io/projects/p_/settings/keys
+            // and using one of your API Keys to generate a token with custom TTL and permissions.
+            onTokenGenerated("MY_WS_URL", "MY_TOKEN")
+        }
+        return
+    }
+
     val activity = this
     val tokenEndpoint = "https://cloud-api.livekit.io/api/sandbox/connection-details"
     val client = OkHttpClient()
