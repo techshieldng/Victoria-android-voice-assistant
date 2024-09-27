@@ -38,115 +38,123 @@ import io.livekit.android.example.voiceassistant.ui.theme.LiveKitVoiceAssistantE
 import io.livekit.android.room.track.Track
 import io.livekit.android.util.LoggingLevel
 
-// Replace these values with your url and generated token.
-const val wsURL = ""
-const val token =
-    ""
-
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         LiveKit.loggingLevel = LoggingLevel.DEBUG
         requireNeededPermissions {
-            setContent {
-                LiveKitVoiceAssistantExampleTheme {
-                    VoiceAssistant(modifier = Modifier.fillMaxSize())
+            requireToken { url, token ->
+                setContent {
+                    LiveKitVoiceAssistantExampleTheme {
+                        VoiceAssistant(
+                            url,
+                            token,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
             }
         }
     }
-}
 
-@Composable
-fun VoiceAssistant(modifier: Modifier = Modifier) {
-    ConstraintLayout(modifier = modifier) {
-        // Setup listening to the local microphone if needed.
-        val localAudioFlow = remember { LocalAudioTrackFlow() }
-        val overrides = remember {
-            LiveKitOverrides(
-                audioOptions = AudioOptions(
-                    javaAudioDeviceModuleCustomizer = { builder ->
-                        builder.setSamplesReadyCallback(localAudioFlow)
-                    }
+    @Composable
+    fun VoiceAssistant(url: String, token: String, modifier: Modifier = Modifier) {
+        ConstraintLayout(modifier = modifier) {
+            // Setup listening to the local microphone if needed.
+            val localAudioFlow = remember { LocalAudioTrackFlow() }
+            val overrides = remember {
+                LiveKitOverrides(
+                    audioOptions = AudioOptions(
+                        javaAudioDeviceModuleCustomizer = { builder ->
+                            builder.setSamplesReadyCallback(localAudioFlow)
+                        }
+                    )
                 )
-            )
-        }
-
-        RoomScope(
-            url = wsURL,
-            token = token,
-            audio = true,
-            connect = true,
-            liveKitOverrides = overrides
-        ) { room ->
-            val (audioVisualizer, chatLog) = createRefs()
-            val trackRefs = rememberTracks(sources = listOf(Track.Source.MICROPHONE))
-            val remoteTrackRef = trackRefs.firstOrNull { it.participant != room.localParticipant }
-
-            val agentState = rememberAgentState(participant = remoteTrackRef?.participant)
-
-            // Optionally do something with the agent state.
-            when (agentState) {
-                AgentState.LISTENING -> {}
-                AgentState.THINKING -> {}
-                AgentState.SPEAKING -> {}
-                else -> {}
             }
 
-            // Amplitude visualization of the Assistant's voice track.
-            RemoteAudioTrackBarVisualizer(
-                audioTrackRef = remoteTrackRef,
-                modifier = Modifier
-                    .padding(8.dp)
-                    .fillMaxWidth()
-                    .constrainAs(audioVisualizer) {
-                        height = Dimension.percent(0.1f)
-                        width = Dimension.fillToConstraints
+            RoomScope(
+                url,
+                token,
+                audio = true,
+                connect = true,
+                liveKitOverrides = overrides
+            ) { room ->
+                val (audioVisualizer, chatLog) = createRefs()
+                val trackRefs = rememberTracks(sources = listOf(Track.Source.MICROPHONE))
+                val remoteTrackRef =
+                    trackRefs.firstOrNull { it.participant != room.localParticipant }
 
-                        top.linkTo(parent.top)
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                    }
-            )
+                val agentState = rememberAgentState(participant = remoteTrackRef?.participant)
 
-            // Get and display the transcriptions.
-            val segments = rememberTranscriptions()
-            val localSegments = rememberParticipantTranscriptions(room.localParticipant)
-            val lazyListState = rememberLazyListState()
+                // Optionally do something with the agent state.
+                when (agentState) {
+                    AgentState.LISTENING -> {}
+                    AgentState.THINKING -> {}
+                    AgentState.SPEAKING -> {}
+                    else -> {}
+                }
 
-            LazyColumn(
-                userScrollEnabled = true,
-                state = lazyListState,
-                modifier = Modifier
-                    .constrainAs(chatLog) {
-                        bottom.linkTo(parent.bottom)
-                        start.linkTo(parent.start)
-                        end.linkTo(parent.end)
-                        height = Dimension.percent(0.9f)
-                        width = Dimension.fillToConstraints
-                    }
-            ) {
-                items(
-                    items = segments,
-                    key = { segment -> segment.id },
-                ) { segment ->
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp)
-                    ) {
-                        if (localSegments.contains(segment)) {
-                            UserTranscription(segment = segment, modifier = Modifier.align(Alignment.CenterEnd))
-                        } else {
-                            Text(text = segment.text, modifier = Modifier.align(Alignment.CenterStart))
+                // Amplitude visualization of the Assistant's voice track.
+                RemoteAudioTrackBarVisualizer(
+                    audioTrackRef = remoteTrackRef,
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxWidth()
+                        .constrainAs(audioVisualizer) {
+                            height = Dimension.percent(0.1f)
+                            width = Dimension.fillToConstraints
+
+                            top.linkTo(parent.top)
+                            start.linkTo(parent.start)
+                            end.linkTo(parent.end)
+                        }
+                )
+
+                // Get and display the transcriptions.
+                val segments = rememberTranscriptions()
+                val localSegments = rememberParticipantTranscriptions(room.localParticipant)
+                val lazyListState = rememberLazyListState()
+
+                LazyColumn(
+                    userScrollEnabled = true,
+                    state = lazyListState,
+                    modifier = Modifier
+                        .constrainAs(chatLog) {
+                            bottom.linkTo(parent.bottom)
+                            start.linkTo(parent.start)
+                            end.linkTo(parent.end)
+                            height = Dimension.percent(0.9f)
+                            width = Dimension.fillToConstraints
+                        }
+                ) {
+                    items(
+                        items = segments,
+                        key = { segment -> segment.id },
+                    ) { segment ->
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                        ) {
+                            if (localSegments.contains(segment)) {
+                                UserTranscription(
+                                    segment = segment,
+                                    modifier = Modifier.align(Alignment.CenterEnd)
+                                )
+                            } else {
+                                Text(
+                                    text = segment.text,
+                                    modifier = Modifier.align(Alignment.CenterStart)
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            // Scroll to bottom as new transcriptions come in.
-            LaunchedEffect(segments) {
-                lazyListState.scrollToItem((segments.size - 1).coerceAtLeast(0))
+                // Scroll to bottom as new transcriptions come in.
+                LaunchedEffect(segments) {
+                    lazyListState.scrollToItem((segments.size - 1).coerceAtLeast(0))
+                }
             }
         }
     }

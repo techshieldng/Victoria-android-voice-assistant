@@ -47,7 +47,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.livekit.lib)
     implementation(libs.livekit.components)
     implementation(libs.androidx.core.ktx)
@@ -59,6 +58,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.gson)
+    implementation(libs.okhttp)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
