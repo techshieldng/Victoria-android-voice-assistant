@@ -43,11 +43,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         LiveKit.loggingLevel = LoggingLevel.DEBUG
         requireNeededPermissions {
-            requireToken { connectionDetails ->
+            requireToken { url, token ->
                 setContent {
                     LiveKitVoiceAssistantExampleTheme {
                         VoiceAssistant(
-                            connectionDetails,
+                            url,
+                            token,
                             modifier = Modifier.fillMaxSize()
                         )
                     }
@@ -58,7 +59,7 @@ class MainActivity : ComponentActivity() {
     }
 
 @Composable
-fun VoiceAssistant(connectionDetails: ConnectionDetails, modifier: Modifier = Modifier) {
+fun VoiceAssistant(url: String, token: String, modifier: Modifier = Modifier) {
     ConstraintLayout(modifier = modifier) {
         // Setup listening to the local microphone if needed.
         val localAudioFlow = remember { LocalAudioTrackFlow() }
@@ -73,8 +74,8 @@ fun VoiceAssistant(connectionDetails: ConnectionDetails, modifier: Modifier = Mo
         }
 
         RoomScope(
-            url = connectionDetails.serverUrl,
-            token = connectionDetails.participantToken,
+            url,
+            token,
             audio = true,
             connect = true,
             liveKitOverrides = overrides
