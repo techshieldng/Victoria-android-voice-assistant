@@ -47,6 +47,10 @@ android {
 }
 
 dependencies {
+
+    // For local development with the LiveKit Compose SDK only.
+    // implementation("io.livekit:livekit-compose-components")
+
     implementation(libs.livekit.lib)
     implementation(libs.livekit.components)
     implementation(libs.androidx.core.ktx)
@@ -60,6 +64,7 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation(libs.gson)
     implementation(libs.okhttp)
+    implementation(libs.timberkt)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -15,27 +15,21 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.compose.Dimension
-import io.livekit.android.AudioOptions
+import com.github.ajalt.timberkt.Timber
 import io.livekit.android.LiveKit
-import io.livekit.android.LiveKitOverrides
 import io.livekit.android.annotations.Beta
 import io.livekit.android.compose.local.RoomScope
-import io.livekit.android.compose.state.rememberTracks
+import io.livekit.android.compose.state.rememberVoiceAssistant
 import io.livekit.android.compose.state.transcriptions.rememberParticipantTranscriptions
 import io.livekit.android.compose.state.transcriptions.rememberTranscriptions
-import io.livekit.android.example.voiceassistant.audio.LocalAudioTrackFlow
-import io.livekit.android.example.voiceassistant.state.AgentState
-import io.livekit.android.example.voiceassistant.state.rememberAgentState
-import io.livekit.android.example.voiceassistant.ui.RemoteAudioTrackBarVisualizer
+import io.livekit.android.compose.ui.audio.VoiceAssistantBarVisualizer
 import io.livekit.android.example.voiceassistant.ui.UserTranscription
 import io.livekit.android.example.voiceassistant.ui.theme.LiveKitVoiceAssistantExampleTheme
-import io.livekit.android.room.track.Track
 import io.livekit.android.util.LoggingLevel
 
 class MainActivity : ComponentActivity() {
@@ -60,49 +54,31 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun VoiceAssistant(url: String, token: String, modifier: Modifier = Modifier) {
         ConstraintLayout(modifier = modifier) {
-            // Setup listening to the local microphone if needed.
-            val localAudioFlow = remember { LocalAudioTrackFlow() }
-            val overrides = remember {
-                LiveKitOverrides(
-                    audioOptions = AudioOptions(
-                        javaAudioDeviceModuleCustomizer = { builder ->
-                            builder.setSamplesReadyCallback(localAudioFlow)
-                        }
-                    )
-                )
-            }
-
             RoomScope(
                 url,
                 token,
                 audio = true,
                 connect = true,
-                liveKitOverrides = overrides
             ) { room ->
                 val (audioVisualizer, chatLog) = createRefs()
-                val trackRefs = rememberTracks(sources = listOf(Track.Source.MICROPHONE))
-                val remoteTrackRef =
-                    trackRefs.firstOrNull { it.participant != room.localParticipant }
 
-                val agentState = rememberAgentState(participant = remoteTrackRef?.participant)
+                val voiceAssistant = rememberVoiceAssistant()
 
+                val agentState = voiceAssistant.state
                 // Optionally do something with the agent state.
-                when (agentState) {
-                    AgentState.LISTENING -> {}
-                    AgentState.THINKING -> {}
-                    AgentState.SPEAKING -> {}
-                    else -> {}
+                LaunchedEffect(key1 = agentState) {
+                    Timber.i { "agent state: $agentState" }
                 }
 
                 // Amplitude visualization of the Assistant's voice track.
-                RemoteAudioTrackBarVisualizer(
-                    audioTrackRef = remoteTrackRef,
+                VoiceAssistantBarVisualizer(
+                    voiceAssistant = voiceAssistant,
                     modifier = Modifier
                         .padding(8.dp)
                         .fillMaxWidth()
                         .constrainAs(audioVisualizer) {
                             height = Dimension.percent(0.1f)
-                            width = Dimension.fillToConstraints
+                            width = Dimension.percent(0.8f)
 
                             top.linkTo(parent.top)
                             start.linkTo(parent.start)

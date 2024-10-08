@@ -26,4 +26,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "LiveKit Voice Assistant Example"
 include(":app")
- 
+
+// For local development with the LiveKit Android SDK only.
+// includeBuild("../components-android")

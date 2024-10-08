@@ -2,9 +2,14 @@ package io.livekit.android.example.voiceassistant
 
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import com.github.ajalt.timberkt.Timber
 import com.google.gson.Gson
+import okhttp3.Call
+import okhttp3.Callback
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 import java.io.IOException
-import okhttp3.*
 
 // TODO: Add your Sandbox ID here
 const val sandboxID = ""
@@ -16,12 +21,13 @@ const val sandboxID = ""
  * When building an app for production, you should use your own token server.
  */
 fun ComponentActivity.requireToken(onTokenGenerated: (url: String, token: String) -> Unit) {
-    if (sandboxID.length == 0) {
+    if (sandboxID.isEmpty()) {
         runOnUiThread {
             // NOTE: If you prefer not to use LiveKit Sandboxes for testing, you can generate your
             // tokens manually by visiting https://cloud.livekit.io/projects/p_/settings/keys
             // and using one of your API Keys to generate a token with custom TTL and permissions.
             onTokenGenerated("MY_WS_URL", "MY_TOKEN")
+            Timber.w { "sandboxID not populated, using default URL and token." }
         }
         return
     }
